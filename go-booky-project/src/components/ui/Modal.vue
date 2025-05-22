@@ -8,6 +8,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'BaseModal' })
 defineProps({ text: String })
 </script>
 
