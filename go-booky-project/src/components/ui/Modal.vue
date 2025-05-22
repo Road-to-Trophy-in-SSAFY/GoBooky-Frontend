@@ -1,8 +1,11 @@
 <template>
   <div class="modal-backdrop" @click.self="$emit('close')">
     <div class="modal-content">
-      <slot>{{ text }}</slot>
-      <button @click="$emit('close')">닫기</button>
+      <slot v-if="$slots.default" />
+      <template v-else>
+        {{ text }}
+        <button @click="$emit('close')">닫기</button>
+      </template>
     </div>
   </div>
 </template>
