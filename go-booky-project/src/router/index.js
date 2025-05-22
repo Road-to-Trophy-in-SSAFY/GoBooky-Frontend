@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import MainView from '@/views/MainView.vue'
+import LandingView from '@/views/LandingView.vue'
 import BookListView from '@/views/BookListView.vue'
 
 const router = createRouter({
@@ -7,13 +8,19 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
       component: MainView,
-    },
-    {
-      path: '/books',
-      name: 'books',
-      component: BookListView,
+      children: [
+        {
+          path: '',
+          name: 'home',
+          component: LandingView,
+        },
+        {
+          path: '/books',
+          name: 'books',
+          component: BookListView,
+        },
+      ],
     },
   ],
 })
