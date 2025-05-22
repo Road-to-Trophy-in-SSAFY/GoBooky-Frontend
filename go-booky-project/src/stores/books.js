@@ -19,5 +19,19 @@ export const useBookStore = defineStore('book', () => {
       })
   }
 
-  return { books, getBooks }
+  const getBookById = function (id) {
+    return books.value.find((book) => book.id === id)
+  }
+
+  const getBookDetail = async function (id) {
+    try {
+      const res = await axios.get(`${API_URL}/books/${id}/`)
+      return res.data
+    } catch (err) {
+      console.log(err)
+      return null
+    }
+  }
+
+  return { books, getBooks, getBookById, getBookDetail }
 })

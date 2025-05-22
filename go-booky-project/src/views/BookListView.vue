@@ -8,7 +8,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useBookStore } from '@/store/books.js'
+import { useBookStore } from '@/stores/books.js'
 import BookList from '@/components/BookList.vue'
 
 const route = useRoute()
