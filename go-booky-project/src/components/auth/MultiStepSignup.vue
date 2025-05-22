@@ -36,6 +36,7 @@
         <span v-if="errors.first_name">{{ errors.first_name }}</span>
         <input v-model="form.last_name" name="last_name" placeholder="성" />
         <span v-if="errors.last_name">{{ errors.last_name }}</span>
+        <button type="button" @click="handleNext">프로필 저장</button>
       </div>
       <div v-else-if="step === 3">
         <p>회원가입이 완료되었습니다! 온보딩을 시작하세요.</p>
@@ -94,12 +95,23 @@ const schemas = [
   }),
 ]
 
+function handleError(err) {
+  if (err.name === 'ValidationError') {
+    err.inner.forEach((e) => {
+      errors.value[e.path] = e.message
+    })
+  } else if (err.response && err.response.data) {
+    modalText.value = Object.values(err.response.data).flat().join(' ')
+  } else {
+    modalText.value = err.response?.data?.detail || err.message
+  }
+}
+
 const handleNext = async () => {
   errors.value = {}
   if (step.value === 0) {
     try {
       await schemas[0].validate(form.value, { abortEarly: false })
-      // 1단계: 모든 정보(이름, 성 포함)를 백엔드에 전달해 uuid만 발급받음(DB 저장 X)
       const res = await axios.post('/auth/register/', {
         email: form.value.email,
         password: form.value.password,
@@ -109,20 +121,12 @@ const handleNext = async () => {
       })
       if (res.data && res.data.uuid) {
         emailVerifyUUID.value = res.data.uuid
+        modalText.value = '이메일로 인증 링크가 발송되었습니다. 메일함을 확인해주세요.'
+        step.value = 1
+        startResendTimer()
       }
-      modalText.value = '이메일로 인증 링크가 발송되었습니다. 메일함을 확인해주세요.'
-      step.value = 1
-      startResendTimer()
     } catch (err) {
-      if (err.name === 'ValidationError') {
-        err.inner.forEach((e) => {
-          errors.value[e.path] = e.message
-        })
-      } else if (err.response && err.response.data) {
-        modalText.value = Object.values(err.response.data).flat().join(' ')
-      } else {
-        modalText.value = err.response?.data?.detail || '회원가입 실패: ' + err.message
-      }
+      handleError(err)
     }
   } else if (step.value === 1) {
     if (!emailVerified.value) {
@@ -134,7 +138,6 @@ const handleNext = async () => {
   } else if (step.value === 2) {
     try {
       await schemas[1].validate(form.value, { abortEarly: false })
-      // 마지막 단계에서 uuid와 함께 모든 정보 전송(DB 저장)
       await axios.patch('/auth/register/complete/', {
         uuid: emailVerifyUUID.value,
         username: form.value.username,
@@ -144,20 +147,11 @@ const handleNext = async () => {
       step.value = 3
       modalText.value = '회원가입이 완료되었습니다!'
     } catch (err) {
-      if (err.name === 'ValidationError') {
-        err.inner.forEach((e) => {
-          errors.value[e.path] = e.message
-        })
-      } else if (err.response && err.response.data) {
-        modalText.value = Object.values(err.response.data).flat().join(' ')
-      } else {
-        modalText.value = err.response?.data?.detail || '프로필 설정 실패: ' + err.message
-      }
+      handleError(err)
     }
   }
 }
 
-// 이메일 인증 확인 함수 (API 호출)
 async function checkEmailVerified() {
   if (!emailVerifyUUID.value) {
     modalText.value = '인증 UUID가 없습니다. 다시 시도해주세요.'
@@ -174,11 +168,10 @@ async function checkEmailVerified() {
     }
   } catch (err) {
     emailVerified.value = false
-    modalText.value = err.response?.data?.detail || '인증 확인 중 오류가 발생했습니다.'
+    handleError(err)
   }
 }
 
-// 재전송 함수
 async function resendEmail() {
   if (!form.value.email) {
     modalText.value = '이메일 주소가 필요합니다.'
@@ -189,7 +182,7 @@ async function resendEmail() {
     modalText.value = '인증 이메일이 재발송되었습니다.'
     startResendTimer()
   } catch (err) {
-    modalText.value = err.response?.data?.detail || '이메일 재발송 중 오류가 발생했습니다.'
+    handleError(err)
   }
 }
 
