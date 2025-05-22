@@ -7,12 +7,12 @@
       <button @click="handleWithdraw">회원탈퇴</button>
     </div>
     <div v-else class="main-actions">
-      <router-link to="/login">
+      <RouterLink to="/login">
         <button>로그인</button>
-      </router-link>
-      <router-link to="/signup">
+      </RouterLink>
+      <RouterLink to="/signup">
         <button>회원가입</button>
-      </router-link>
+      </RouterLink>
     </div>
     <Modal v-if="modalText" :text="modalText" @close="modalText = ''" />
   </div>
