@@ -5,7 +5,8 @@
       <p>{{ book.title }}</p>
       <p>{{ book.author }}</p>
       <p>{{ book.publisher }}</p>
-      <p>{{ book.pub_data }}</p>
+      <p>카테고리: {{ book.category_name }}</p>
+      <p>{{ book.pub_date }}</p>
       <img :src="book.cover" alt="Book Cover" />
     </div>
     <hr />
