@@ -29,6 +29,17 @@ const schema = yup.object({
   password: yup.string().required('필수 입력'),
 })
 
+function handleError(err) {
+  if (err.name === 'ValidationError') {
+    err.inner.forEach((e) => {
+      errors.value[e.path] = e.message
+    })
+  } else {
+    modalText.value =
+      err.response?.data?.detail || '이메일 혹은 비밀번호가 틀렸습니다. 다시 시도해주세요.'
+  }
+}
+
 const handleLogin = async () => {
   errors.value = {}
   try {
@@ -39,14 +50,7 @@ const handleLogin = async () => {
       router.push('/')
     }, 500)
   } catch (err) {
-    if (err.name === 'ValidationError') {
-      err.inner.forEach((e) => {
-        errors.value[e.path] = e.message
-      })
-    } else {
-      modalText.value =
-        err.response?.data?.detail || '이메일 혹은 비밀번호가 틀렸습니다. 다시 시도해주세요.'
-    }
+    handleError(err)
   }
 }
 </script>

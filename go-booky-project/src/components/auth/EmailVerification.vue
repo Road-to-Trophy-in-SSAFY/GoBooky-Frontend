@@ -23,6 +23,10 @@ let resendInterval = null
 
 const route = useRoute()
 
+function handleError(err) {
+  modalText.value = err.response?.data?.detail || err.message
+}
+
 onMounted(async () => {
   const uuid = route.params.uuid
   if (uuid) {
@@ -30,7 +34,7 @@ onMounted(async () => {
       const res = await axios.get(`/auth/verify-email/${uuid}/`)
       message.value = res.data.detail
     } catch (err) {
-      message.value = err.response?.data?.detail || '인증 처리 중 오류가 발생했습니다.'
+      handleError(err)
     }
   }
 })
@@ -47,7 +51,7 @@ const resendEmail = async () => {
     modalText.value = '인증 메일이 재전송되었습니다.'
     startResendTimer()
   } catch (err) {
-    modalText.value = err.response?.data?.detail || '재전송 실패: ' + err.message
+    handleError(err)
   }
 }
 

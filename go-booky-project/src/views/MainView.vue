@@ -29,6 +29,10 @@ const auth = useAuthStore()
 const router = useRouter()
 const modalText = ref('')
 
+function handleError(err, fallbackMsg = '회원탈퇴 실패') {
+  modalText.value = err.response?.data?.detail || fallbackMsg
+}
+
 const handleLogout = () => {
   auth.logout()
   router.push('/')
@@ -36,7 +40,6 @@ const handleLogout = () => {
 
 const handleWithdraw = async () => {
   try {
-    // 실제로는 비밀번호 확인 등 추가 로직 필요
     await axios.delete('/auth/account/', { data: { password: '' } })
     auth.logout()
     modalText.value = '회원탈퇴가 완료되었습니다.'
@@ -44,7 +47,7 @@ const handleWithdraw = async () => {
       router.push('/')
     }, 1000)
   } catch (err) {
-    modalText.value = err.response?.data?.detail || '회원탈퇴 실패'
+    handleError(err)
   }
 }
 </script>
