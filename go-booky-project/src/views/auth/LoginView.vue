@@ -11,19 +11,32 @@
       />
       <button type="submit" class="submit-button">로그인</button>
     </form>
+    <Modal v-if="modalText" :text="modalText" @close="modalText = ''" />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import SanitizedInput from '@/components/common/SanitizedInput.vue'
+import Modal from '@/components/ui/Modal.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
 const email = ref('')
 const password = ref('')
+const modalText = ref('')
+
+// 컴포넌트 마운트 시 localStorage에서 이메일 복원
+onMounted(() => {
+  email.value = localStorage.getItem('login_email') || ''
+})
+
+// 이메일이 변경될 때마다 localStorage에 저장
+watch(email, (newValue) => {
+  localStorage.setItem('login_email', newValue)
+})
 
 const handleSubmit = async () => {
   try {
@@ -31,7 +44,9 @@ const handleSubmit = async () => {
     // 로그인 성공 시 메인 페이지로 이동
     router.push('/')
   } catch (error) {
-    console.error('로그인 실패:', error)
+    modalText.value =
+      error.response?.data?.detail || '이메일 혹은 비밀번호가 틀렸습니다. 다시 시도해주세요.'
+    password.value = '' // 로그인 실패 시 비밀번호 초기화
   }
 }
 </script>
