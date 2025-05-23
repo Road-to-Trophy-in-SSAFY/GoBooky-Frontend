@@ -1,14 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import EmailVerificationView from '@/views/auth/EmailVerificationView.vue'
-import LoginView from '@/views/auth/LoginView.vue'
-import SignupView from '@/views/auth/SignupView.vue'
-import MainView from '@/views/MainView.vue'
-import LandingView from '@/views/LandingView.vue'
-import BookListView from '@/views/BookListView.vue'
-import BookDetailView from '@/views/BookDetailView.vue'
-import ThreadListView from '@/views/ThreadListView.vue'
-import ThreadDetailView from '@/views/ThreadDetailView.vue'
-import ThreadWriteView from '@/views/ThreadWriteView.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -16,55 +6,55 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      component: MainView,
+      component: () => import('@/views/MainView.vue'),
       children: [
         {
           path: '',
           name: 'home',
-          component: LandingView,
+          component: () => import('@/views/LandingView.vue'),
         },
         {
           path: '/books',
           name: 'books',
-          component: BookListView,
+          component: () => import('@/views/BookListView.vue'),
         },
         {
           path: '/books/:id',
           name: 'book-detail',
-          component: BookDetailView,
+          component: () => import('@/views/BookDetailView.vue'),
         },
         {
           path: '/threads',
           name: 'threads',
-          component: ThreadListView,
+          component: () => import('@/views/ThreadListView.vue'),
         },
         {
           path: '/threads/write',
           name: 'thread-write',
-          component: ThreadWriteView,
+          component: () => import('@/views/ThreadWriteView.vue'),
           meta: { requiresAuth: true },
         },
         {
           path: '/threads/:id',
           name: 'thread-detail',
-          component: ThreadDetailView,
+          component: () => import('@/views/ThreadDetailView.vue'),
         },
       ],
     },
     {
       path: '/signup',
       name: 'Signup',
-      component: SignupView,
+      component: () => import('@/views/auth/SignupView.vue'),
     },
     {
       path: '/login',
       name: 'Login',
-      component: LoginView,
+      component: () => import('@/views/auth/LoginView.vue'),
     },
     {
       path: '/verify-email/:uuid',
       name: 'EmailVerification',
-      component: EmailVerificationView,
+      component: () => import('@/views/auth/EmailVerificationView.vue'),
     },
   ],
 })
