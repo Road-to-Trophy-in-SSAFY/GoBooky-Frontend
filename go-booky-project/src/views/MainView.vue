@@ -1,6 +1,8 @@
 <template>
   <nav>
-    <img src="/logo.png" alt="GoBooky Logo" class="logo" />
+    <RouterLink :to="{ name: 'home' }">
+      <img src="/logo.png" alt="GoBooky Logo" class="logo" />
+    </RouterLink>
     <RouterLink :to="{ name: 'home' }">Home</RouterLink>
     &nbsp;|&nbsp;
     <RouterLink :to="{ name: 'books' }">Books</RouterLink>
