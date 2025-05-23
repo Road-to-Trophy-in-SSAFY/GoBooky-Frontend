@@ -1,7 +1,10 @@
 <!-- 쓰레드 전체 목록 조회 view -->
 <template>
   <div>
-    <h2>쓰레드 목록</h2>
+    <div class="header-actions">
+      <h2>쓰레드 목록</h2>
+    </div>
+
     <!-- 카테고리 필터 -->
     <div class="category-filter">
       <button :class="{ active: selectedCategory === null }" @click="selectCategory(null)">
@@ -16,9 +19,15 @@
         {{ category.fields.name }}
       </button>
     </div>
+
     <!-- 쓰레드 목록 -->
     <div v-if="filteredThreads.length > 0" class="thread-list">
-      <div v-for="thread in filteredThreads" :key="thread.id" class="thread-item">
+      <div
+        v-for="thread in filteredThreads"
+        :key="thread.id"
+        class="thread-item"
+        :data-id="thread.id"
+      >
         <div class="thread-image">
           <img :src="getThreadImage(thread)" alt="쓰레드 이미지" class="cover-thumbnail" />
         </div>
@@ -89,6 +98,13 @@ const goToThreadDetail = (threadId) => {
 </script>
 
 <style scoped>
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
 .thread-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -105,6 +121,23 @@ const goToThreadDetail = (threadId) => {
 
 .thread-item:hover {
   transform: translateY(-5px);
+}
+
+.thread-item.highlight {
+  animation: highlight-pulse 3s;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+}
+
+@keyframes highlight-pulse {
+  0% {
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+  }
+  70% {
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+  }
+  100% {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
 }
 
 .thread-image {

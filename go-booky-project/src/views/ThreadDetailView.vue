@@ -16,33 +16,53 @@
     </div>
 
     <div class="actions">
-      <button @click="likeThread">
+      <button @click="likeThread" class="like-btn">
         {{ isLiked ? '좋아요 취소' : '좋아요' }} ({{ likesCount }})
       </button>
-      <button @click="showEditForm = !showEditForm">수정</button>
-      <button @click="deleteThread">삭제</button>
+      <button @click="showEditModal = true" class="edit-btn">수정</button>
+      <button @click="showDeleteModal = true" class="delete-btn">삭제</button>
     </div>
 
-    <!-- 수정 폼 -->
-    <div v-if="showEditForm" class="edit-form">
-      <h3>쓰레드 수정</h3>
-      <div>
-        <label for="title">제목</label>
-        <input id="title" v-model="editForm.title" type="text" />
+    <!-- 수정 모달 -->
+    <Modal
+      :model-value="showEditModal"
+      @update:model-value="showEditModal = $event"
+      title="쓰레드 수정"
+      :close-on-overlay-click="false"
+    >
+      <div class="edit-form">
+        <div class="form-group">
+          <label for="title">제목</label>
+          <input id="title" v-model="editForm.title" type="text" required />
+        </div>
+        <div class="form-group">
+          <label for="content">내용</label>
+          <textarea id="content" v-model="editForm.content" rows="10" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="reading_date">독서일</label>
+          <input id="reading_date" v-model="editForm.reading_date" type="date" required />
+        </div>
       </div>
-      <div>
-        <label for="content">내용</label>
-        <textarea id="content" v-model="editForm.content" rows="5"></textarea>
-      </div>
-      <div>
-        <label for="reading_date">독서일</label>
-        <input id="reading_date" v-model="editForm.reading_date" type="date" />
-      </div>
-      <div class="form-actions">
-        <button @click="updateThread">저장</button>
-        <button @click="showEditForm = false">취소</button>
-      </div>
-    </div>
+      <template #footer>
+        <div class="modal-actions">
+          <button @click="showEditModal = false" :disabled="isLoading">취소</button>
+          <button @click="updateThread" :disabled="isLoading" class="save-btn">
+            {{ isLoading ? '저장 중...' : '저장' }}
+          </button>
+        </div>
+      </template>
+    </Modal>
+
+    <!-- 삭제 확인 모달 -->
+    <ConfirmModal
+      :model-value="showDeleteModal"
+      @update:model-value="showDeleteModal = $event"
+      title="쓰레드 삭제"
+      message="정말 이 쓰레드를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+      confirm-text="삭제"
+      @confirm="confirmDelete"
+    />
   </div>
   <div v-else>
     <p>쓰레드를 불러오는 중입니다...</p>
@@ -53,14 +73,18 @@
 import { ref, onMounted, computed } from 'vue'
 import { useThreadStore } from '@/stores/thread'
 import { useRoute, useRouter } from 'vue-router'
+import Modal from '@/components/Modal.vue'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
 const threadStore = useThreadStore()
 const route = useRoute()
 const router = useRouter()
 const thread = ref(null)
-const showEditForm = ref(false)
+const showEditModal = ref(false)
+const showDeleteModal = ref(false)
 const isLiked = ref(false)
 const likesCount = ref(0)
+const isLoading = ref(false)
 const editForm = ref({
   title: '',
   content: '',
@@ -112,22 +136,25 @@ const formatDate = (dateString) => {
 
 const updateThread = async () => {
   try {
+    isLoading.value = true
     await threadStore.updateThread(route.params.id, editForm.value)
     await loadThread()
-    showEditForm.value = false
+    isLoading.value = false
+    showEditModal.value = false
   } catch (error) {
+    isLoading.value = false
     console.error('쓰레드 수정 실패:', error)
+    alert('쓰레드 수정에 실패했습니다.')
   }
 }
 
-const deleteThread = async () => {
-  if (confirm('정말 삭제하시겠습니까?')) {
-    try {
-      await threadStore.deleteThread(route.params.id)
-      router.push({ name: 'threads' })
-    } catch (error) {
-      console.error('쓰레드 삭제 실패:', error)
-    }
+const confirmDelete = async () => {
+  try {
+    await threadStore.deleteThread(route.params.id)
+    router.push({ name: 'threads' })
+  } catch (error) {
+    console.error('쓰레드 삭제 실패:', error)
+    alert('쓰레드 삭제에 실패했습니다.')
   }
 }
 
@@ -145,6 +172,8 @@ const likeThread = async () => {
 <style scoped>
 .thread-detail {
   padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .thread-image {
@@ -162,37 +191,84 @@ const likeThread = async () => {
 .content {
   margin: 20px 0;
   white-space: pre-line;
+  line-height: 1.6;
 }
 
 .actions {
   margin-top: 20px;
+  display: flex;
+  gap: 10px;
 }
 
 .actions button {
-  margin-right: 10px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
+.like-btn {
+  background-color: #3498db;
+  color: white;
+}
+
+.edit-btn {
+  background-color: #f39c12;
+  color: white;
+}
+
+.delete-btn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+/* 수정 폼 스타일 */
 .edit-form {
-  margin-top: 20px;
-  border: 1px solid #ccc;
-  padding: 15px;
+  padding: 10px;
 }
 
-.edit-form div {
-  margin-bottom: 10px;
+.form-group {
+  margin-bottom: 15px;
 }
 
-.edit-form label {
+.form-group label {
   display: block;
   margin-bottom: 5px;
+  font-weight: bold;
 }
 
-.edit-form input,
-.edit-form textarea {
+.form-group input,
+.form-group textarea {
   width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
-.form-actions {
-  margin-top: 15px;
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-actions button:first-child {
+  background-color: #f1f1f1;
+}
+
+.save-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.modal-actions button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
 </style>

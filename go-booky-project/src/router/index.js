@@ -29,12 +29,6 @@ const router = createRouter({
           component: () => import('@/views/ThreadListView.vue'),
         },
         {
-          path: '/threads/write',
-          name: 'thread-write',
-          component: () => import('@/views/ThreadWriteView.vue'),
-          meta: { requiresAuth: true },
-        },
-        {
           path: '/threads/:id',
           name: 'thread-detail',
           component: () => import('@/views/ThreadDetailView.vue'),
