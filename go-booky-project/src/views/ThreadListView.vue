@@ -17,12 +17,17 @@
       </button>
     </div>
     <!-- 쓰레드 목록 -->
-    <div v-if="filteredThreads.length > 0">
+    <div v-if="filteredThreads.length > 0" class="thread-list">
       <div v-for="thread in filteredThreads" :key="thread.id" class="thread-item">
-        <h3>{{ thread.title }}</h3>
-        <p>책: {{ thread.book.title }}</p>
-        <p>카테고리: {{ thread.book.category_name }}</p>
-        <button @click="goToThreadDetail(thread.id)">자세히 보기</button>
+        <div class="thread-image">
+          <img :src="getThreadImage(thread)" alt="쓰레드 이미지" class="cover-thumbnail" />
+        </div>
+        <div class="thread-info">
+          <h3>{{ thread.title }}</h3>
+          <p>책: {{ thread.book.title }}</p>
+          <p>카테고리: {{ thread.book.category_name }}</p>
+          <button @click="goToThreadDetail(thread.id)" class="detail-btn">자세히 보기</button>
+        </div>
       </div>
     </div>
     <div v-else>
@@ -42,11 +47,32 @@ const router = useRouter()
 const threads = ref([])
 const categories = categoriesData
 const selectedCategory = ref(null)
+const API_URL = 'http://127.0.0.1:8000'
+const defaultImageUrl = '/default_thread_image.jpg'
 
 onMounted(async () => {
+  await loadThreads()
+})
+
+const loadThreads = async () => {
   await threadStore.getThreads()
   threads.value = threadStore.threads
-})
+}
+
+const getThreadImage = (thread) => {
+  if (thread.cover_img_url) {
+    return thread.cover_img_url
+  }
+  if (thread.cover_img) {
+    // 절대 경로인지 확인
+    if (thread.cover_img.startsWith('http')) {
+      return thread.cover_img
+    }
+    return `${API_URL}/media/${thread.cover_img}`
+  }
+  // 기본 이미지 사용
+  return '/logo.png'
+}
 
 const selectCategory = (categoryName) => {
   selectedCategory.value = categoryName
@@ -63,14 +89,48 @@ const goToThreadDetail = (threadId) => {
 </script>
 
 <style scoped>
+.thread-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
 .thread-item {
   border: 1px solid #ccc;
-  padding: 10px;
-  margin-bottom: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
 }
+
+.thread-item:hover {
+  transform: translateY(-5px);
+}
+
+.thread-image {
+  height: 180px;
+  overflow: hidden;
+}
+
+.cover-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thread-info {
+  padding: 15px;
+}
+
+.thread-info h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
 .category-filter {
   margin-bottom: 20px;
 }
+
 .category-filter button {
   margin-right: 8px;
   padding: 6px 14px;
@@ -79,9 +139,34 @@ const goToThreadDetail = (threadId) => {
   cursor: pointer;
   border-radius: 4px;
 }
+
 .category-filter button.active {
   background: #4caf50;
   color: #fff;
   border-color: #4caf50;
+}
+
+.thread-actions {
+  margin-bottom: 15px;
+  text-align: right;
+}
+
+.refresh-btn {
+  padding: 6px 14px;
+  background: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.detail-btn {
+  padding: 6px 12px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
 }
 </style>

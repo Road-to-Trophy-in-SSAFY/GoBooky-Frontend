@@ -17,7 +17,9 @@ export const useThreadStore = defineStore('thread', () => {
   // 전체 쓰레드 조회
   const getThreads = async () => {
     try {
-      const res = await axios.get(`${API_URL}/books/threads/`)
+      // 캐시를 무시하기 위해 타임스탬프 추가
+      const timestamp = new Date().getTime()
+      const res = await axios.get(`${API_URL}/books/threads/?t=${timestamp}`)
       threads.value = res.data
     } catch (err) {
       console.log(err)
@@ -27,8 +29,11 @@ export const useThreadStore = defineStore('thread', () => {
   // 단일 쓰레드 조회
   const getThreadDetail = async (threadId) => {
     try {
-      const res = await axios.get(`${API_URL}/books/threads/${threadId}/`)
+      // 캐시를 무시하기 위해 타임스탬프 추가
+      const timestamp = new Date().getTime()
+      const res = await axios.get(`${API_URL}/books/threads/${threadId}/?t=${timestamp}`)
       threadDetail.value = res.data
+      console.log('Thread detail loaded:', threadDetail.value)
     } catch (err) {
       console.log(err)
     }

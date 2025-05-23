@@ -2,6 +2,12 @@
 <template>
   <div v-if="thread" class="thread-detail">
     <h2>{{ thread.title }}</h2>
+
+    <!-- 쓰레드 이미지 표시 -->
+    <div class="thread-image">
+      <img :src="threadImage" alt="쓰레드 이미지" class="cover-image" />
+    </div>
+
     <p>책: {{ thread.book.title }}</p>
     <p>작성일: {{ formatDate(thread.created_at) }}</p>
     <p>독서일: {{ formatDate(thread.reading_date) }}</p>
@@ -59,6 +65,26 @@ const editForm = ref({
   title: '',
   content: '',
   reading_date: '',
+})
+
+// 기본 이미지 URL
+const defaultImageUrl = '/default_thread_image.jpg'
+const API_URL = 'http://127.0.0.1:8000'
+
+// 쓰레드 이미지 계산
+const threadImage = computed(() => {
+  if (thread.value && thread.value.cover_img_url) {
+    return thread.value.cover_img_url
+  }
+  if (thread.value && thread.value.cover_img) {
+    // 절대 경로인지 확인
+    if (thread.value.cover_img.startsWith('http')) {
+      return thread.value.cover_img
+    }
+    return `${API_URL}/media/${thread.value.cover_img}`
+  }
+  // 기본 이미지 사용
+  return '/logo.png'
 })
 
 onMounted(async () => {
@@ -119,6 +145,18 @@ const likeThread = async () => {
 <style scoped>
 .thread-detail {
   padding: 20px;
+}
+
+.thread-image {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.cover-image {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .content {
