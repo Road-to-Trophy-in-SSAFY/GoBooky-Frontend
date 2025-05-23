@@ -1,4 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import EmailVerificationView from '@/views/auth/EmailVerificationView.vue'
+import LoginView from '@/views/auth/LoginView.vue'
+import MainView from '@/views/MainView.vue'
+import SignupView from '@/views/auth/SignupView.vue'
 import MainView from '@/views/MainView.vue'
 import LandingView from '@/views/LandingView.vue'
 import BookListView from '@/views/BookListView.vue'
@@ -6,6 +10,7 @@ import BookDetailView from '@/views/BookDetailView.vue'
 import ThreadListView from '@/views/ThreadListView.vue'
 import ThreadDetailView from '@/views/ThreadDetailView.vue'
 import ThreadWriteView from '@/views/ThreadWriteView.vue'
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -45,6 +50,21 @@ const router = createRouter({
           component: ThreadDetailView,
         },
       ],
+    },
+    {
+      path: '/signup',
+      name: 'Signup',
+      component: SignupView,
+    },
+    {
+      path: '/login',
+      name: 'Login',
+      component: LoginView,
+    },
+    {
+      path: '/verify-email/:uuid',
+      name: 'EmailVerification',
+      component: EmailVerificationView,
     },
   ],
 })
