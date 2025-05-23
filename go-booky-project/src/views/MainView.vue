@@ -1,29 +1,25 @@
 <template>
   <nav>
+    <img src="/logo.png" alt="GoBooky Logo" class="logo" />
     <RouterLink :to="{ name: 'home' }">Home</RouterLink>
     &nbsp;|&nbsp;
     <RouterLink :to="{ name: 'books' }">Books</RouterLink>
     &nbsp;|&nbsp;
     <RouterLink :to="{ name: 'threads' }">Threads</RouterLink>
+    &nbsp;|&nbsp;
+    <template v-if="auth.isAuthenticated">
+      <RouterLink to="/mypage"><button>마이페이지</button></RouterLink>
+      <button @click="handleLogout">로그아웃</button>
+    </template>
+    <template v-else>
+      <RouterLink to="/login"><button>로그인</button></RouterLink>
+      <RouterLink to="/signup"><button>회원가입</button></RouterLink>
+    </template>
   </nav>
   <div>
     <RouterView />
   </div>
   <div class="main-container">
-    <h1>GoBooky</h1>
-    <div v-if="auth.isAuthenticated" class="main-actions">
-      <span style="font-weight: bold">{{ auth.user?.email }} 님 환영합니다!</span>
-      <button @click="handleLogout">로그아웃</button>
-      <button @click="openDeleteModal">회원탈퇴</button>
-    </div>
-    <div v-else class="main-actions">
-      <RouterLink to="/login">
-        <button>로그인</button>
-      </RouterLink>
-      <RouterLink to="/signup">
-        <button>회원가입</button>
-      </RouterLink>
-    </div>
     <Modal v-if="modalText" :text="modalText" @close="modalText = ''" />
     <Modal v-if="showDeleteModal" @close="closeDeleteModal">
       <template #default>
@@ -94,25 +90,23 @@ const handleWithdraw = async () => {
 </script>
 
 <style scoped>
-.main-container {
-  max-width: 400px;
-  margin: 5rem auto;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  text-align: center;
-}
-.main-actions {
-  margin-top: 2rem;
+nav {
   display: flex;
-  justify-content: space-around;
+  align-items: center;
+  gap: 10px;
+  padding: 1rem 2rem;
+  background: #f5f5f5;
 }
-button {
+nav .logo {
+  height: 48px;
+  margin-right: 20px;
+}
+nav button {
+  margin-left: 10px;
   background: #42b983;
   color: #fff;
   border: none;
-  padding: 0.75rem 2rem;
+  padding: 0.5rem 1.2rem;
   border-radius: 6px;
   font-size: 1rem;
   cursor: pointer;

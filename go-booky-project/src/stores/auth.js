@@ -21,12 +21,15 @@ export const useAuthStore = defineStore('auth', {
         this.refresh = res.data.refresh
         this.isAuthenticated = true
         this.user = res.data.user || { email }
+        localStorage.setItem('access_token', res.data.access)
+        localStorage.setItem('refresh_token', res.data.refresh)
       } catch (error) {
-        // 인증 실패 시 상태만 초기화, 불필요한 logout() 호출 제거
         this.user = null
         this.access = null
         this.refresh = null
         this.isAuthenticated = false
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
         throw error
       }
     },
@@ -38,6 +41,8 @@ export const useAuthStore = defineStore('auth', {
       this.access = null
       this.refresh = null
       this.isAuthenticated = false
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
     },
     /**
      * 사용자 정보 수동 설정 (내부 전용)

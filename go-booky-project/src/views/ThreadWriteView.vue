@@ -56,11 +56,13 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThreadStore } from '@/stores/thread'
 import { useBookStore } from '@/stores/books'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const threadStore = useThreadStore()
 const bookStore = useBookStore()
+const authStore = useAuthStore()
 
 const book = ref(null)
 const today = new Date().toISOString().split('T')[0]
@@ -72,6 +74,11 @@ const threadForm = ref({
 })
 
 onMounted(async () => {
+  if (!authStore.isAuthenticated || !authStore.access) {
+    alert('로그인이 필요한 서비스입니다.')
+    router.push({ name: 'Login' })
+    return
+  }
   // URL에서 bookId를 가져옴
   const bookId = route.query.bookId
   if (bookId) {
@@ -88,7 +95,14 @@ const submitThread = async () => {
     await threadStore.createThread(threadForm.value)
     router.push({ name: 'threads' })
   } catch (error) {
-    console.error('쓰레드 작성 실패:', error)
+    if (error.response?.status === 401) {
+      alert('로그인이 만료되었습니다. 다시 로그인해주세요.')
+      authStore.logout()
+      router.push({ name: 'Login' })
+    } else {
+      console.error('쓰레드 작성 실패:', error)
+      alert('쓰레드 작성에 실패했습니다.')
+    }
   }
 }
 

@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import EmailVerificationView from '@/views/auth/EmailVerificationView.vue'
 import LoginView from '@/views/auth/LoginView.vue'
-import MainView from '@/views/MainView.vue'
 import SignupView from '@/views/auth/SignupView.vue'
 import MainView from '@/views/MainView.vue'
 import LandingView from '@/views/LandingView.vue'
@@ -10,7 +9,7 @@ import BookDetailView from '@/views/BookDetailView.vue'
 import ThreadListView from '@/views/ThreadListView.vue'
 import ThreadDetailView from '@/views/ThreadDetailView.vue'
 import ThreadWriteView from '@/views/ThreadWriteView.vue'
-
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -43,6 +42,7 @@ const router = createRouter({
           path: '/threads/write',
           name: 'thread-write',
           component: ThreadWriteView,
+          meta: { requiresAuth: true },
         },
         {
           path: '/threads/:id',
@@ -67,6 +67,16 @@ const router = createRouter({
       component: EmailVerificationView,
     },
   ],
+})
+
+router.beforeEach((to, from, next) => {
+  const auth = useAuthStore()
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    alert('로그인이 필요한 서비스입니다.')
+    next({ name: 'Login' })
+  } else {
+    next()
+  }
 })
 
 export default router
