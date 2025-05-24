@@ -17,6 +17,10 @@ import { useCategoryStore } from '@/stores/category.js'
 import { computed } from 'vue'
 import { useBookStore } from '@/stores/books.js'
 
+defineOptions({
+  name: 'CategoryList',
+})
+
 const categoryStore = useCategoryStore()
 const categories = computed(() => categoryStore.categories)
 const bookStore = useBookStore()
