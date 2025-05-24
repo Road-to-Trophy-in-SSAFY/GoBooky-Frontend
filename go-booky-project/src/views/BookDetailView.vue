@@ -2,7 +2,7 @@
   <div class="book-detail-container">
     <div class="book-header">
       <!-- 쓰레드 작성 버튼 -->
-      <button v-if="book" @click="showWriteModal = true" class="thread-write-btn">
+      <button v-if="book" @click="handleThreadWriteClick" class="thread-write-btn">
         쓰레드 작성
       </button>
     </div>
@@ -119,6 +119,17 @@ const isFormValid = computed(() => {
   )
 })
 
+// 쓰레드 작성 버튼 클릭 핸들러
+const handleThreadWriteClick = () => {
+  if (!authStore.isAuthenticated) {
+    alert('로그인이 필요한 서비스입니다.')
+    router.push({ name: 'Login' })
+    return
+  }
+  // 로그인된 상태일 때만 모달 표시
+  showWriteModal.value = true
+}
+
 onMounted(async () => {
   book.value = await bookStore.getBookDetail(route.params.id)
   if (book.value) {
@@ -127,12 +138,6 @@ onMounted(async () => {
 })
 
 const submitThread = async () => {
-  if (!authStore.isAuthenticated) {
-    alert('로그인이 필요한 서비스입니다.')
-    router.push({ name: 'Login' })
-    return
-  }
-
   try {
     isLoading.value = true
     await threadStore.createThread(threadForm.value)
