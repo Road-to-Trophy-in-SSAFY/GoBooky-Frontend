@@ -32,7 +32,13 @@ onMounted(async () => {
   if (uuid) {
     try {
       const res = await axios.get(`/auth/verify-email/${uuid}/`)
-      message.value = res.data.detail
+      if (res.status === 200) {
+        modalText.value = res.data.detail || '이메일 인증이 완료되었습니다. 다음을 진행해주세요.'
+        message.value = ''
+      } else {
+        message.value = res.data?.detail || '이메일 인증 중 오류가 발생했습니다.'
+        modalText.value = ''
+      }
     } catch (err) {
       handleError(err)
     }
