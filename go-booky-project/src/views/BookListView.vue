@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBookStore } from '@/stores/books.js'
 import BookList from '@/components/BookList.vue'
@@ -33,9 +33,30 @@ import BookSearch from '@/components/BookSearch.vue'
 const route = useRoute()
 const bookStore = useBookStore()
 
+// 페이지 초기 로드 시 URL에 검색어가 있는지 확인
 onMounted(() => {
-  bookStore.getBooks()
+  const searchQuery = route.query.q
+  if (searchQuery) {
+    bookStore.searchBooks(searchQuery)
+  } else {
+    bookStore.getBooks()
+  }
 })
+
+// 카테고리 변경 시 검색어 유지
+watch(
+  () => route.query.category,
+  (newCategory) => {
+    const searchQuery = route.query.q
+    if (searchQuery) {
+      // 검색어가 있으면 검색 결과 유지
+      bookStore.searchBooks(searchQuery)
+    } else {
+      // 검색어가 없으면 카테고리로 필터링
+      bookStore.getBooks(newCategory)
+    }
+  },
+)
 </script>
 
 <style scoped>
