@@ -16,9 +16,8 @@
 
       <div v-if="!isEditing" class="view-mode">
         <p><strong>이메일:</strong> {{ profile.email }}</p>
-        <p><strong>성:</strong> {{ profile.last_name }}</p>
-        <p><strong>이름:</strong> {{ profile.first_name }}</p>
-        <p><strong>성별:</strong> {{ profile.gender }}</p>
+        <p><strong>이름:</strong> {{ profile.last_name + profile.first_name }}</p>
+        <p><strong>성별:</strong> {{ genderToKorean(profile.gender) }}</p>
         <p><strong>주간 평균 독서 시간:</strong> {{ profile.weekly_read_time || '미입력' }} 시간</p>
         <p><strong>연간 독서량:</strong> {{ profile.yearly_read_count || '미입력' }} 권</p>
         <p>
@@ -302,6 +301,13 @@ function handleError(err, fallbackMsg = '오류가 발생했습니다.') {
   } else {
     modalText.value = err.message || fallbackMsg
   }
+}
+
+// 성별 한글 변환 함수
+function genderToKorean(gender) {
+  if (gender === 'male') return '남성'
+  if (gender === 'female') return '여성'
+  return gender || '미입력'
 }
 
 onMounted(async () => {
