@@ -264,9 +264,6 @@ const handleSubmit = async () => {
   text-decoration: none;
 }
 
-.back-link a:active {
-}
-
 @media (max-width: 480px) {
   .login-form {
     padding: 2rem 1.5rem;
