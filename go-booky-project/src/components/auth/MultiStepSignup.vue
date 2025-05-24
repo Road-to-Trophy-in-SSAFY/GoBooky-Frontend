@@ -27,13 +27,38 @@
             placeholder="비밀번호"
             inputClass="form-control"
           />
+          <div class="password-validation">
+            <p
+              v-for="(message, index) in passwordValidationMessages"
+              :key="index"
+              :class="{ valid: message.valid }"
+            >
+              {{ message.text }}
+            </p>
+          </div>
           <span v-if="formState.errors.password" class="error">{{
             formState.errors.password
           }}</span>
         </div>
+        <div class="form-group">
+          <SanitizedInput
+            v-model="formState.form.passwordConfirm"
+            type="password"
+            placeholder="비밀번호 확인"
+            inputClass="form-control"
+          />
+          <div class="password-match-container">
+            <span
+              v-if="formState.form.password"
+              :class="['password-match', { match: isPasswordMatch }]"
+            >
+              {{ passwordMatchMessage }}
+            </span>
+          </div>
+        </div>
       </div>
       <div v-else-if="currentStep === 1">
-        <div v-if="formState.loading.check" class="loader">
+        <div v-if="formState.loading.check" class="verification-loading">
           <div class="spinner"></div>
           <p>이메일 인증 중...</p>
         </div>
@@ -52,33 +77,51 @@
               <polyline points="22,6 12,13 2,6" />
             </svg>
           </div>
-          <p class="verification-message">
-            이메일로 인증 메일이 발송되었습니다.<br />메일함을 확인해주세요.
-          </p>
-          <div class="verification-actions">
-            <button
-              type="button"
-              @click="resendEmail"
-              :disabled="formState.verification.resendDisabled || formState.loading.resend"
-              class="btn btn-secondary"
-            >
-              <span v-if="formState.loading.resend" class="spinner-small"></span>
-              <span v-else>재전송</span>
-            </button>
-            <span v-if="formState.verification.resendDisabled" class="resend-timer"
-              >({{ formState.verification.resendTimer }}초 후 재전송 가능)</span
-            >
-            <button
-              type="button"
-              @click="checkEmailVerified"
-              :disabled="formState.loading.check"
-              class="btn btn-primary"
-            >
-              <span v-if="formState.loading.check" class="spinner-small"></span>
-              <span v-else>이메일 인증 확인</span>
-            </button>
+          <div class="verification-content">
+            <h3>이메일 인증</h3>
+            <p class="verification-message">
+              <span class="email-highlight">{{ formState.form.email }}</span
+              >로<br />
+              인증 메일이 발송되었습니다.<br />
+              메일함을 확인해주세요.
+            </p>
+            <div class="verification-actions">
+              <button
+                type="button"
+                @click="resendEmail"
+                :disabled="formState.verification.resendDisabled || formState.loading.resend"
+                class="btn btn-secondary"
+              >
+                <span v-if="formState.loading.resend" class="spinner-small"></span>
+                <span v-else>재전송</span>
+              </button>
+              <span v-if="formState.verification.resendDisabled" class="resend-timer">
+                {{ formState.verification.resendTimer }}초 후 재전송 가능
+              </span>
+              <button
+                type="button"
+                @click="checkEmailVerified"
+                :disabled="formState.loading.check"
+                class="btn btn-primary"
+              >
+                <span v-if="formState.loading.check" class="spinner-small"></span>
+                <span v-else>이메일 인증 확인</span>
+              </button>
+            </div>
+            <div v-if="formState.verification.verified" class="verification-success">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              <span>인증 완료</span>
+            </div>
           </div>
-          <span v-if="formState.verification.verified" class="verification-success">인증 완료</span>
         </div>
       </div>
       <div v-else-if="currentStep === 2">
@@ -202,16 +245,12 @@
         </button>
       </div>
     </form>
-    <Modal
-      v-if="formState.modal.text"
-      :text="formState.modal.text"
-      @close="formState.modal.text = ''"
-    />
+    <Modal v-if="formState.modal.text" :text="formState.modal.text" @close="handleModalClose" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import * as yup from 'yup'
 import Modal from '../ui/Modal.vue'
 import SanitizedInput from '../common/SanitizedInput.vue'
@@ -227,6 +266,7 @@ const formState = ref({
   form: {
     email: '',
     password: '',
+    passwordConfirm: '',
     username: '',
     first_name: '',
     last_name: '',
@@ -258,10 +298,31 @@ const formState = ref({
 const currentStep = computed(() => step.value)
 const isLastStep = computed(() => step.value === 4)
 const canProceed = computed(() => {
-  if (currentStep.value === 1) {
-    return formState.value.verification.verified
+  switch (currentStep.value) {
+    case 0: {
+      // 이메일과 비밀번호 유효성 검사
+      const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.value.form.email)
+      const passwordValid = passwordValidationMessages.value.every((msg) => msg.valid)
+      const passwordMatch = formState.value.form.password === formState.value.form.passwordConfirm
+      const hasPasswordConfirm = formState.value.form.passwordConfirm !== ''
+      return emailValid && passwordValid && passwordMatch && hasPasswordConfirm
+    }
+    case 1:
+      return formState.value.verification.verified
+    case 2:
+      // 기본 정보 유효성 검사
+      return (
+        formState.value.form.username &&
+        formState.value.form.first_name &&
+        formState.value.form.last_name &&
+        formState.value.form.gender
+      )
+    case 3:
+      // 독서 정보 유효성 검사
+      return formState.value.form.category_ids.length > 0
+    default:
+      return true
   }
-  return true
 })
 
 // 유효성 검사 스키마
@@ -300,7 +361,9 @@ const handleError = (err) => {
       formState.value.errors[e.path] = e.message
     })
   } else if (err.response?.data) {
-    formState.value.modal.text = Object.values(err.response.data).flat().join(' ')
+    // 특정 에러 메시지 확인
+    const errorMessage = Object.values(err.response.data).flat().join(' ')
+    formState.value.modal.text = errorMessage
   } else {
     formState.value.modal.text = err.response?.data?.detail || err.message
   }
@@ -406,6 +469,47 @@ const completeRegistration = async () => {
   }
 }
 
+// 모달 닫기 핸들러
+const handleModalClose = () => {
+  const modalText = formState.value.modal.text
+  formState.value.modal.text = '' // 먼저 모달 닫기
+
+  // 특정 에러 메시지인 경우 회원가입 초기화
+  if (modalText === '해당 이메일로 대기 중인 인증이 없습니다.') {
+    step.value = 0 // 첫 번째 스텝으로 이동
+    // 폼 상태 및 검증 상태 초기화
+    formState.value.form = {
+      email: '',
+      password: '',
+      passwordConfirm: '',
+      username: '',
+      first_name: '',
+      last_name: '',
+      gender: '',
+      weekly_read_time: null,
+      yearly_read_count: null,
+      category_ids: [],
+    }
+    formState.value.errors = {}
+    formState.value.verification = {
+      uuid: '',
+      verified: false,
+      resendDisabled: false,
+      resendTimer: 60,
+    }
+    // 비밀번호 유효성 메시지 초기화
+    passwordValidationMessages.value = [
+      { text: '8자 이상', valid: false },
+      { text: '대문자 포함', valid: false },
+      { text: '소문자 포함', valid: false },
+      { text: '숫자 포함', valid: false },
+      { text: '특수문자 포함', valid: false },
+    ]
+    passwordMatchMessage.value = '비밀번호를 입력해주세요'
+    isPasswordMatch.value = false
+  }
+}
+
 // 단계별 처리 함수
 const handleNext = async () => {
   formState.value.errors = {}
@@ -460,23 +564,95 @@ const fetchCategories = async () => {
 onMounted(() => {
   fetchCategories()
 })
+
+const passwordValidationMessages = ref([
+  { text: '8자 이상', valid: false },
+  { text: '대문자 포함', valid: false },
+  { text: '소문자 포함', valid: false },
+  { text: '숫자 포함', valid: false },
+  { text: '특수문자 포함', valid: false },
+])
+const passwordMatchMessage = ref('비밀번호를 입력해주세요')
+const isPasswordMatch = ref(false)
+
+// 디바운스 유틸리티 함수
+const debounce = (fn, delay) => {
+  let timeoutId
+  return (...args) => {
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => fn(...args), delay)
+  }
+}
+
+// 비밀번호 유효성 검사 함수
+const validatePassword = debounce(() => {
+  const password = formState.value.form.password
+  passwordValidationMessages.value = [
+    { text: '8자 이상', valid: password.length >= 8 },
+    { text: '대문자 포함', valid: /[A-Z]/.test(password) },
+    { text: '소문자 포함', valid: /[a-z]/.test(password) },
+    { text: '숫자 포함', valid: /[0-9]/.test(password) },
+    { text: '특수문자 포함', valid: /[!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~]/.test(password) },
+  ]
+}, 300)
+
+// 비밀번호 일치 검사 함수
+const checkPasswordMatch = debounce(() => {
+  const password = formState.value.form.password
+  const confirmPassword = formState.value.form.passwordConfirm
+
+  if (!confirmPassword) {
+    isPasswordMatch.value = false
+    return
+  }
+
+  if (password === confirmPassword) {
+    passwordMatchMessage.value = '비밀번호가 일치합니다'
+    isPasswordMatch.value = true
+  } else {
+    passwordMatchMessage.value = '비밀번호가 일치하지 않습니다'
+    isPasswordMatch.value = false
+  }
+}, 300)
+
+// 비밀번호 변경 감시
+watch(
+  () => formState.value.form.password,
+  () => {
+    validatePassword()
+    if (formState.value.form.passwordConfirm) {
+      checkPasswordMatch()
+    }
+  },
+)
+
+// 비밀번호 확인 변경 감시
+watch(
+  () => formState.value.form.passwordConfirm,
+  () => {
+    if (formState.value.form.password) {
+      checkPasswordMatch()
+    }
+  },
+)
 </script>
 
 <style scoped>
 .signup-container {
   max-width: 600px;
-  margin: 0 auto;
-  padding: 2rem;
+  margin: 2rem auto;
+  padding: 2.5rem;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .step-progress {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   position: relative;
+  padding: 0 1rem;
 }
 
 .step-progress::before {
@@ -486,125 +662,129 @@ onMounted(() => {
   left: 0;
   right: 0;
   height: 2px;
-  background: #eee;
+  background: #e2e8f0;
   z-index: 1;
 }
 
 .step {
   flex: 1;
   text-align: center;
-  padding: 0.5rem 0;
+  padding: 0.75rem 0;
   position: relative;
   z-index: 2;
   background: #fff;
-  color: #aaa;
-  font-size: 0.9rem;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
 .step.active {
   color: #42b983;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
 }
 
 .form-control {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  padding: 0.875rem 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+  background-color: #f8fafc;
 }
 
 .form-control:focus {
   border-color: #42b983;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.1);
+  background-color: #fff;
 }
 
 .error {
-  color: #dc3545;
+  color: #ef4444;
   font-size: 0.875rem;
   margin-top: 0.5rem;
   display: block;
+  font-weight: 500;
 }
 
-.verification-container {
-  text-align: center;
-  padding: 2rem;
+.password-validation {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  min-height: 120px;
+  padding: 0.5rem;
+  background-color: #f8fafc;
+  border-radius: 8px;
 }
 
-.verification-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 1.5rem;
-  color: #42b983;
-}
-
-.verification-message {
-  font-size: 1.1rem;
-  color: #666;
-  margin-bottom: 1.5rem;
-}
-
-.verification-actions {
+.password-validation p {
+  color: #ef4444;
+  margin: 0.5rem 0;
   display: flex;
-  gap: 1rem;
-  justify-content: center;
   align-items: center;
-  margin-bottom: 1rem;
+  gap: 0.5rem;
 }
 
-.verification-success {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  background: #42b983;
-  color: white;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
-.completion-container {
-  text-align: center;
-  padding: 2rem;
-}
-
-.completion-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1.5rem;
-  color: #42b983;
-}
-
-.completion-message {
+.password-validation p::before {
+  content: '•';
   font-size: 1.2rem;
-  color: #42b983;
-  font-weight: bold;
-  margin-bottom: 1rem;
 }
 
-.redirect-loader {
-  margin-top: 1rem;
+.password-validation p.valid {
+  color: #42b983;
+}
+
+.password-match-container {
+  min-height: 24px;
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  background-color: #f8fafc;
+  border-radius: 8px;
+}
+
+.password-match {
+  display: block;
+  font-size: 0.875rem;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.password-match.match {
+  color: #42b983;
 }
 
 .btn {
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.75rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
+  width: 100%;
+  margin-top: 1rem;
 }
 
 .btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+  background: #e2e8f0;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-primary {
@@ -614,15 +794,158 @@ onMounted(() => {
 
 .btn-primary:hover:not(:disabled) {
   background: #3aa876;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(66, 185, 131, 0.2);
 }
 
-.btn-secondary {
-  background: #6c757d;
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.verification-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.verification-loading p {
+  margin-top: 1rem;
+  color: #475569;
+  font-size: 1.1rem;
+}
+
+.verification-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 2rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.verification-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 2rem;
+  color: #42b983;
+  animation: float 3s ease-in-out infinite;
+}
+
+.verification-content {
+  width: 100%;
+  max-width: 400px;
+}
+
+.verification-content h3 {
+  color: #1e293b;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.verification-message {
+  font-size: 1.1rem;
+  color: #475569;
+  margin-bottom: 2rem;
+  line-height: 1.8;
+}
+
+.email-highlight {
+  color: #42b983;
+  font-weight: 600;
+  background: rgba(66, 185, 131, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.verification-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.verification-actions .btn {
+  width: 100%;
+  max-width: 300px;
+}
+
+.resend-timer {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+
+.verification-success {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #42b983;
   color: white;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.2);
+  animation: slideUp 0.3s ease-out;
 }
 
-.btn-secondary:hover:not(:disabled) {
-  background: #5a6268;
+.verification-success svg {
+  width: 20px;
+  height: 20px;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.completion-container {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.completion-icon {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 2rem;
+  color: #42b983;
+}
+
+.completion-message {
+  font-size: 1.25rem;
+  color: #42b983;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.redirect-loader {
+  margin-top: 1rem;
 }
 
 .spinner {
@@ -688,28 +1011,71 @@ onMounted(() => {
 
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
 }
 
 .category-item {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
+  padding: 0.875rem;
+  border: 1.5px solid #e2e8f0;
   border-radius: 8px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-weight: 500;
+  background: #fff;
 }
 
 .category-item:hover {
   border-color: #42b983;
-  background-color: #f8f8f8;
+  background-color: #f0fdf4;
+  transform: translateY(-1px);
 }
 
 .category-item.selected {
   background-color: #42b983;
   color: white;
   border-color: #42b983;
+  box-shadow: 0 2px 8px rgba(66, 185, 131, 0.2);
+}
+
+.reading-info h3,
+.categories h3 {
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.reading-info label {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  .signup-container {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+
+  .step-progress {
+    margin-bottom: 2rem;
+  }
+
+  .step {
+    font-size: 0.85rem;
+  }
+
+  .verification-container,
+  .completion-container {
+    padding: 1.5rem;
+  }
+
+  .category-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
 }
 </style>
