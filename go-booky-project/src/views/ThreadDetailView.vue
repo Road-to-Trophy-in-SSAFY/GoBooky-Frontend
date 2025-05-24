@@ -11,9 +11,7 @@
     <p>책: {{ thread.book.title }}</p>
     <p>작성일: {{ formatDate(thread.created_at) }}</p>
     <p>독서일: {{ formatDate(thread.reading_date) }}</p>
-    <div class="content">
-      {{ thread.content }}
-    </div>
+    <div class="content" v-html="thread.content"></div>
 
     <div class="actions">
       <button @click="likeThread" class="like-btn">
@@ -37,7 +35,14 @@
         </div>
         <div class="form-group">
           <label for="content">내용</label>
-          <textarea id="content" v-model="editForm.content" rows="10" required></textarea>
+          <QuillEditor
+            v-model:content="editForm.content"
+            contentType="html"
+            theme="snow"
+            toolbar="essential"
+            :options="editorOptions"
+            class="editor-container"
+          />
         </div>
         <div class="form-group">
           <label for="reading_date">독서일</label>
@@ -75,6 +80,8 @@ import { useThreadStore } from '@/stores/thread'
 import { useRoute, useRouter } from 'vue-router'
 import Modal from '@/components/Modal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
 const threadStore = useThreadStore()
 const route = useRoute()
@@ -110,6 +117,19 @@ const threadImage = computed(() => {
   // 기본 이미지 사용
   return '/logo.png'
 })
+
+const editorOptions = {
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      [{ header: [1, 2, 3, false] }],
+      ['link'],
+      ['clean'],
+    ],
+  },
+  placeholder: '내용을 입력하세요',
+}
 
 onMounted(async () => {
   await loadThread()
@@ -270,5 +290,18 @@ const likeThread = async () => {
 .modal-actions button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
+}
+
+/* Quill 에디터 스타일 */
+.editor-container {
+  height: 300px;
+  margin-bottom: 20px;
+}
+
+/* Quill 에디터 안의 내용 영역 스타일 */
+:deep(.ql-editor) {
+  min-height: 200px;
+  font-size: 14px;
+  line-height: 1.6;
 }
 </style>

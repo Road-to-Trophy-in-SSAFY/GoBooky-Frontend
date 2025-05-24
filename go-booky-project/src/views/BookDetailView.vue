@@ -46,13 +46,14 @@
 
         <div class="form-group">
           <label for="content">내용</label>
-          <textarea
-            id="content"
-            v-model="threadForm.content"
-            rows="10"
-            required
-            placeholder="내용을 입력하세요"
-          ></textarea>
+          <QuillEditor
+            v-model:content="threadForm.content"
+            contentType="html"
+            theme="snow"
+            toolbar="essential"
+            :options="editorOptions"
+            class="editor-container"
+          />
         </div>
 
         <div class="form-group">
@@ -93,6 +94,8 @@ import { useThreadStore } from '@/stores/thread'
 import { useAuthStore } from '@/stores/auth'
 import { useRoute, useRouter } from 'vue-router'
 import Modal from '@/components/Modal.vue'
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
 const bookStore = useBookStore()
 const threadStore = useThreadStore()
@@ -118,6 +121,19 @@ const isFormValid = computed(() => {
     threadForm.value.reading_date !== ''
   )
 })
+
+const editorOptions = {
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      [{ header: [1, 2, 3, false] }],
+      ['link'],
+      ['clean'],
+    ],
+  },
+  placeholder: '내용을 입력하세요',
+}
 
 // 쓰레드 작성 버튼 클릭 핸들러
 const handleThreadWriteClick = () => {
@@ -297,5 +313,18 @@ const submitThread = async () => {
   100% {
     transform: scale(1);
   }
+}
+
+/* Quill 에디터 스타일 */
+.editor-container {
+  height: 300px;
+  margin-bottom: 20px;
+}
+
+/* Quill 에디터 안의 내용 영역 스타일 */
+:deep(.ql-editor) {
+  min-height: 200px;
+  font-size: 14px;
+  line-height: 1.6;
 }
 </style>
