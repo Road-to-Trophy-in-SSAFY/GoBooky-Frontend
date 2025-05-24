@@ -1,6 +1,9 @@
 <template>
   <div class="profile-container">
-    <h2>마이페이지</h2>
+    <div class="profile-header-bar">
+      <button class="home-btn" @click="goHome">🏠 홈으로</button>
+      <h2>마이페이지</h2>
+    </div>
 
     <div v-if="loading" class="loading">프로필 정보를 불러오는 중...</div>
 
@@ -11,7 +14,7 @@
           alt="프로필 사진"
           class="profile-picture"
         />
-        <div>
+        <div class="profile-header-info">
           <h3>{{ profile.username }}</h3>
           <div class="follow-info">
             <span>팔로워 {{ profile.followers_count }}</span>
@@ -100,8 +103,10 @@
           <span v-if="categoriesError" class="error">{{ categoriesError }}</span>
         </div>
 
-        <button @click="saveProfile" class="save-button">저장</button>
-        <button @click="cancelEditing" class="cancel-button">취소</button>
+        <div class="edit-btn-group">
+          <button @click="saveProfile" class="save-button">저장</button>
+          <button @click="cancelEditing" class="cancel-button">취소</button>
+        </div>
       </div>
     </div>
 
@@ -271,13 +276,6 @@ const saveProfile = async () => {
 
   if (profilePictureFile.value) {
     formData.append('profile_picture', profilePictureFile.value)
-  } else if (
-    profile.value.profile_picture &&
-    profilePictureFile.value === null &&
-    'profile_picture' in event.target.files &&
-    event.target.files.length === 0
-  ) {
-    formData.append('profile_picture', '')
   }
 
   if (formData.entries().next().done && !profilePictureFile.value) {
@@ -339,6 +337,10 @@ function genderToKorean(gender) {
   if (gender === 'male') return '남성'
   if (gender === 'female') return '여성'
   return gender || '미입력'
+}
+
+const goHome = () => {
+  router.push('/')
 }
 
 onMounted(async () => {
@@ -403,21 +405,27 @@ watch(
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-h2 {
-  text-align: center;
-  color: #1e293b;
+.profile-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 2rem;
 }
 
-.loading,
-.error-message {
-  text-align: center;
-  color: #475569;
-  font-size: 1.1rem;
+.home-btn {
+  background: #f7f7f7;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.5rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-.profile-details {
-  margin-top: 2rem;
+.home-btn:hover {
+  background: #eaeaea;
 }
 
 .profile-header {
@@ -426,6 +434,12 @@ h2 {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid #eee;
+}
+
+.profile-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .profile-picture {
@@ -458,37 +472,44 @@ h2 {
   font-weight: 600;
 }
 
+.edit-mode {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
 .form-group {
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.7rem;
   color: #1e293b;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 .form-control {
   width: 100%;
-  padding: 0.875rem 1rem;
+  padding: 0.8rem 1rem;
   border: 1.5px solid #e2e8f0;
   border-radius: 8px;
   font-size: 1rem;
+  background-color: #fff;
+  color: #1e293b;
   transition: all 0.2s ease;
-  background-color: #f8fafc;
 }
 
 .form-control:focus {
   border-color: #42b983;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.1);
-  background-color: #fff;
+  background-color: #f8fafc;
 }
 
 .edit-mode .form-group input[type='file'] {
-  padding: 0.75rem 0;
+  padding: 0.7rem 0;
   border: none;
   background-color: transparent;
 }
@@ -499,6 +520,7 @@ h2 {
   border: none;
   border-radius: 6px;
   background-color: #e2e8f0;
+  color: #1e293b;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
@@ -524,6 +546,7 @@ h2 {
   font-weight: 500;
   background: #fff;
   font-size: 0.9rem;
+  color: #1e293b;
 }
 
 .category-item:hover {
@@ -537,11 +560,18 @@ h2 {
   border-color: #42b983;
 }
 
+.edit-btn-group {
+  display: flex;
+  gap: 1.2rem;
+  margin-top: 1.5rem;
+  justify-content: flex-end;
+}
+
 .edit-button,
 .save-button,
 .cancel-button {
   display: inline-block;
-  padding: 0.75rem 1.5rem;
+  padding: 0.7rem 1.5rem;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
@@ -580,7 +610,7 @@ h2 {
 
 .error {
   color: #dc3545;
-  font-size: 0.875rem;
+  font-size: 0.93rem;
   margin-top: 0.5rem;
   display: block;
 }
