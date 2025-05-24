@@ -195,7 +195,7 @@
           v-if="!isLastStep"
           type="submit"
           class="btn btn-primary"
-          :disabled="formState.loading.submit"
+          :disabled="formState.loading.submit || !canProceed"
         >
           <span v-if="formState.loading.submit" class="spinner-small"></span>
           <span v-else>다음</span>

@@ -22,14 +22,19 @@ export const useAuthStore = defineStore('auth', {
       this.rememberMe = rememberMe
       try {
         const res = await axios.post('/auth/login/', { email, password })
-        this.user = res.data.user
-        this.isAuthenticated = true
-        this.accessToken = res.data.access
+        if (res.data && res.data.user) {
+          this.user = res.data.user
+          this.isAuthenticated = true
+          this.accessToken = res.data.access
+          return true // 로그인 성공
+        }
+        return false // 응답은 있지만 사용자 데이터가 없는 경우
       } catch (error) {
         this.user = null
         this.isAuthenticated = false
         this.accessToken = null
         this.error = error.response?.data?.detail || '로그인에 실패했습니다.'
+        throw error // 에러를 상위로 전파
       } finally {
         this.isLoading = false
       }
