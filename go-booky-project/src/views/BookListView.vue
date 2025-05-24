@@ -1,11 +1,9 @@
 <template>
   <div>
     <div class="sidebar">
-      <p>카테고리</p>
       <Category />
     </div>
     <div class="content">
-      <p>book-list-view</p>
       <BookList :books="bookStore.filteredBooks" />
     </div>
   </div>

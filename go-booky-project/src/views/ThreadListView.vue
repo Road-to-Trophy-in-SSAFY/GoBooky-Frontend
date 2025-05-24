@@ -2,7 +2,6 @@
 <template>
   <div>
     <div class="header-actions">
-      <h2>쓰레드 목록</h2>
     </div>
 
     <!-- 카테고리 필터 -->

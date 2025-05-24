@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h4>book-card</h4>
     <div class="book-card" @click="goToBookDetail">
       <p>{{ book.title }}</p>
       <p>{{ book.author }}</p>

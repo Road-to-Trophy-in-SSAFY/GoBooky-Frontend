@@ -1,6 +1,5 @@
 <template>
   <div>
-    <p>카테고리 목록</p>
     <ul>
       <li v-for="category in categories" :key="category.pk">
         <button @click="selectCategory(category.pk)">{{ category.fields.name }}</button>
