@@ -42,7 +42,7 @@ export const useBookStore = defineStore('book', () => {
   }
 
   // 검색 함수
-  const searchBooks = function (query) {
+  const searchBooks = function (query, searchInAllCategories = true) {
     if (!query) {
       getBooks(currentCategory.value)
       return
@@ -50,6 +50,10 @@ export const useBookStore = defineStore('book', () => {
 
     isLoading.value = true
     currentSearchQuery.value = query // 현재 검색어 저장
+
+    // 전체 카테고리에서 검색 (기본 동작)
+    const savedCategory = currentCategory.value // 현재 카테고리 저장
+    currentCategory.value = null // 검색 시 카테고리 필터 초기화
 
     axios({
       method: 'get',
@@ -59,21 +63,22 @@ export const useBookStore = defineStore('book', () => {
       .then((res) => {
         books.value = res.data
         searchResults.value = res.data // 검색 결과 저장
+        filteredBooks.value = res.data // 모든 검색 결과 표시 (카테고리 필터 적용 안함)
         hasSearchResults.value = true // 검색 결과 있음으로 설정
 
-        // 카테고리 필터가 있으면 클라이언트 측에서 추가 필터링
-        if (currentCategory.value) {
-          filteredBooks.value = res.data.filter(
+        // searchInAllCategories가 false이고 저장된 카테고리가 있는 경우에만
+        // 검색 결과에 카테고리 필터 적용
+        if (!searchInAllCategories && savedCategory) {
+          currentCategory.value = savedCategory
+          filteredBooks.value = searchResults.value.filter(
             (book) =>
-              book.category_name &&
-              getCategoryPkByName(book.category_name) === currentCategory.value,
+              book.category_name && getCategoryPkByName(book.category_name) === savedCategory,
           )
-        } else {
-          filteredBooks.value = res.data
         }
       })
       .catch((err) => {
         console.log(err)
+        // 에러 시 카테고리 상태 복원하지 않음
       })
       .finally(() => {
         isLoading.value = false

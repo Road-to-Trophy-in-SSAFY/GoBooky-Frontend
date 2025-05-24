@@ -47,7 +47,7 @@ onMounted(() => {
   const queryParam = route.query.q
   if (queryParam) {
     searchQuery.value = queryParam
-    bookStore.searchBooks(queryParam)
+    bookStore.searchBooks(queryParam, true) // 항상 전체 카테고리에서 검색
   }
 })
 
@@ -58,7 +58,7 @@ watch(
     if (newQuery !== searchQuery.value) {
       searchQuery.value = newQuery || ''
       if (newQuery) {
-        bookStore.searchBooks(newQuery)
+        bookStore.searchBooks(newQuery, true) // 항상 전체 카테고리에서 검색
       } else {
         bookStore.getBooks()
       }
@@ -70,9 +70,14 @@ watch(
 const handleSearch = () => {
   const query = searchQuery.value.trim()
   if (query) {
+    // URL 쿼리 파라미터 업데이트 (카테고리 정보 제거)
+    const newQuery = { q: query } // 카테고리 정보를 유지하지 않음
+
     // URL 쿼리 파라미터 업데이트
-    router.push({ query: { ...route.query, q: query } })
-    bookStore.searchBooks(query)
+    router.push({ query: newQuery })
+
+    // 항상 전체 카테고리에서 검색 (카테고리 필터 무시)
+    bookStore.searchBooks(query, true)
   } else {
     // 검색어가 비어있으면 쿼리 파라미터 제거 및 전체 목록으로 되돌림
     const newQuery = { ...route.query }

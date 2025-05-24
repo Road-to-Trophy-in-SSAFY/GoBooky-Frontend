@@ -33,29 +33,39 @@ import BookSearch from '@/components/BookSearch.vue'
 const route = useRoute()
 const bookStore = useBookStore()
 
-// 페이지 초기 로드 시 URL에 검색어가 있는지 확인
+// 페이지 초기 로드 시 URL 파라미터에 따라 상태 설정
 onMounted(() => {
   const searchQuery = route.query.q
+  const categoryParam = route.query.category ? parseInt(route.query.category) : null
+
   if (searchQuery) {
-    bookStore.searchBooks(searchQuery)
+    // 검색어가 있으면 전체 카테고리에서 검색
+    bookStore.searchBooks(searchQuery, true)
+  } else if (categoryParam) {
+    // 카테고리만 있으면 해당 카테고리 필터링
+    bookStore.getBooks(categoryParam)
   } else {
-    bookStore.getBooks()
+    // 둘 다 없으면 전체 도서 목록
+    bookStore.getBooks(null)
   }
 })
 
-// 카테고리 변경 시 검색어 유지
+// URL 변경 감지
 watch(
-  () => route.query.category,
-  (newCategory) => {
-    const searchQuery = route.query.q
+  () => route.query,
+  (newQuery) => {
+    const searchQuery = newQuery.q
+    const categoryParam = newQuery.category ? parseInt(newQuery.category) : null
+
     if (searchQuery) {
-      // 검색어가 있으면 검색 결과 유지
-      bookStore.searchBooks(searchQuery)
-    } else {
-      // 검색어가 없으면 카테고리로 필터링
-      bookStore.getBooks(newCategory)
+      // 검색어가 있으면 전체 카테고리에서 검색
+      bookStore.searchBooks(searchQuery, true)
+    } else if (categoryParam !== undefined) {
+      // 카테고리 변경 시 해당 카테고리로 필터링
+      bookStore.getBooks(categoryParam)
     }
   },
+  { deep: true },
 )
 </script>
 

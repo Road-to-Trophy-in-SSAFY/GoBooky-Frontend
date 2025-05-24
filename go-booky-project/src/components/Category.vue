@@ -4,13 +4,16 @@
       <li v-for="category in categories" :key="category.pk">
         <button
           @click="selectCategory(category.pk)"
-          :class="{ active: currentCategory === category.pk }"
+          :class="{ active: bookStore.currentCategory === category.pk }"
         >
           {{ category.fields.name }}
         </button>
       </li>
       <li>
-        <button @click="selectCategory(null)" :class="{ active: currentCategory === null }">
+        <button
+          @click="selectCategory(null)"
+          :class="{ active: bookStore.currentCategory === null }"
+        >
           전체
         </button>
       </li>
@@ -20,7 +23,7 @@
 
 <script setup>
 import { useCategoryStore } from '@/stores/category.js'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useBookStore } from '@/stores/books.js'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -29,9 +32,6 @@ const categories = computed(() => categoryStore.categories)
 const bookStore = useBookStore()
 const router = useRouter()
 const route = useRoute()
-
-// 현재 선택된 카테고리를 저장
-const currentCategory = computed(() => bookStore.currentCategory)
 
 function selectCategory(pk) {
   // URL 쿼리 파라미터 업데이트
