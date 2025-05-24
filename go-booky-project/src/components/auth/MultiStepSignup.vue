@@ -126,44 +126,78 @@
       </div>
       <div v-else-if="currentStep === 2">
         <div class="form-group">
-          <SanitizedInput
-            v-model="formState.form.username"
-            type="text"
-            placeholder="닉네임"
-            inputClass="form-control"
-          />
+          <label for="username">닉네임</label>
+          <div class="input-with-button">
+            <SanitizedInput
+              id="username"
+              v-model="formState.form.username"
+              type="text"
+              placeholder="닉네임"
+              inputClass="form-control"
+              @input="resetNicknameCheck"
+            />
+            <button
+              type="button"
+              class="btn btn-secondary check-button"
+              @click="checkNicknameAvailability"
+              :disabled="!formState.form.username || formState.loading.nicknameCheck"
+            >
+              <span v-if="formState.loading.nicknameCheck" class="spinner-small"></span>
+              <span v-else>중복 확인</span>
+            </button>
+          </div>
+          <div class="nickname-check-message-container">
+            <span
+              v-if="formState.nicknameCheckMessage"
+              :class="[
+                'nickname-check-message',
+                {
+                  available: formState.isNicknameAvailable === true,
+                  'not-available': formState.isNicknameAvailable === false,
+                },
+              ]"
+            >
+              {{ formState.nicknameCheckMessage }}
+            </span>
+          </div>
           <span v-if="formState.errors.username" class="error">{{
             formState.errors.username
           }}</span>
         </div>
-        <div class="form-group">
-          <SanitizedInput
-            v-model="formState.form.first_name"
-            type="text"
-            placeholder="이름"
-            inputClass="form-control"
-          />
-          <span v-if="formState.errors.first_name" class="error">{{
-            formState.errors.first_name
-          }}</span>
+        <div class="name-group">
+          <div class="form-group">
+            <label for="last_name">성</label>
+            <SanitizedInput
+              id="last_name"
+              v-model="formState.form.last_name"
+              type="text"
+              placeholder="성"
+              inputClass="form-control"
+            />
+            <span v-if="formState.errors.last_name" class="error">{{
+              formState.errors.last_name
+            }}</span>
+          </div>
+          <div class="form-group">
+            <label for="first_name">이름</label>
+            <SanitizedInput
+              id="first_name"
+              v-model="formState.form.first_name"
+              type="text"
+              placeholder="이름"
+              inputClass="form-control"
+            />
+            <span v-if="formState.errors.first_name" class="error">{{
+              formState.errors.first_name
+            }}</span>
+          </div>
         </div>
         <div class="form-group">
-          <SanitizedInput
-            v-model="formState.form.last_name"
-            type="text"
-            placeholder="성"
-            inputClass="form-control"
-          />
-          <span v-if="formState.errors.last_name" class="error">{{
-            formState.errors.last_name
-          }}</span>
-        </div>
-        <div class="form-group">
-          <select v-model="formState.form.gender" name="gender" class="form-control">
+          <label for="gender">성별</label>
+          <select id="gender" v-model="formState.form.gender" name="gender" class="form-control">
             <option value="">성별 선택</option>
             <option value="male">남성</option>
             <option value="female">여성</option>
-            <option value="other">기타</option>
           </select>
           <span v-if="formState.errors.gender" class="error">{{ formState.errors.gender }}</span>
         </div>
@@ -281,6 +315,7 @@ const formState = ref({
     resend: false,
     check: false,
     redirect: false,
+    nicknameCheck: false,
   },
   verification: {
     uuid: '',
@@ -292,6 +327,8 @@ const formState = ref({
     text: '',
   },
   categories: [],
+  nicknameCheckMessage: '',
+  isNicknameAvailable: null,
 })
 
 // computed 속성으로 자주 사용되는 값들 캐싱
@@ -309,14 +346,15 @@ const canProceed = computed(() => {
     }
     case 1:
       return formState.value.verification.verified
-    case 2:
-      // 기본 정보 유효성 검사
-      return (
+    case 2: {
+      // 기본 정보 유효성 검사 및 닉네임 중복 확인
+      const basicInfoValid =
         formState.value.form.username &&
         formState.value.form.first_name &&
         formState.value.form.last_name &&
         formState.value.form.gender
-      )
+      return basicInfoValid && formState.value.isNicknameAvailable === true
+    }
     case 3:
       // 독서 정보 유효성 검사
       return formState.value.form.category_ids.length > 0
@@ -341,9 +379,21 @@ const schemas = [
   }),
   yup.object({}),
   yup.object({
-    username: yup.string().min(2).max(20).required('필수 입력'),
-    first_name: yup.string().min(1).max(20).required('필수 입력'),
-    last_name: yup.string().min(1).max(20).required('필수 입력'),
+    username: yup
+      .string()
+      .min(2, '닉네임은 2자 이상이어야 합니다.')
+      .max(20, '닉네임은 20자 이하여야 합니다.')
+      .required('필수 입력'),
+    first_name: yup
+      .string()
+      .min(1, '이름은 1자 이상이어야 합니다.')
+      .max(20, '이름은 20자 이하여야 합니다.')
+      .required('필수 입력'),
+    last_name: yup
+      .string()
+      .min(1, '성은 1자 이상이어야 합니다.')
+      .max(20, '성은 20자 이하여야 합니다.')
+      .required('필수 입력'),
     gender: yup.string().required('성별을 선택해주세요'),
   }),
   yup.object({
@@ -469,6 +519,40 @@ const completeRegistration = async () => {
   }
 }
 
+const checkNicknameAvailability = async () => {
+  if (!formState.value.form.username) {
+    formState.value.nicknameCheckMessage = '닉네임을 입력해주세요.'
+    formState.value.isNicknameAvailable = null
+    return
+  }
+  try {
+    formState.value.loading.nicknameCheck = true
+    // 닉네임 중복 확인 API 호출
+    const res = await axios.post('/auth/check-nickname/', {
+      username: formState.value.form.username,
+    })
+    if (res.data.available) {
+      formState.value.nicknameCheckMessage = '사용 가능한 닉네임입니다.'
+      formState.value.isNicknameAvailable = true
+    } else {
+      formState.value.nicknameCheckMessage = '이미 사용 중인 닉네임입니다.'
+      formState.value.isNicknameAvailable = false
+    }
+  } catch (err) {
+    // 에러 발생 시 메시지 표시 및 상태 업데이트
+    handleError(err)
+    formState.value.nicknameCheckMessage = '닉네임 중복 확인 중 오류가 발생했습니다.'
+    formState.value.isNicknameAvailable = false
+  } finally {
+    formState.value.loading.nicknameCheck = false
+  }
+}
+
+const resetNicknameCheck = () => {
+  formState.value.nicknameCheckMessage = ''
+  formState.value.isNicknameAvailable = null
+}
+
 // 모달 닫기 핸들러
 const handleModalClose = () => {
   const modalText = formState.value.modal.text
@@ -561,8 +645,33 @@ const fetchCategories = async () => {
 }
 
 // 컴포넌트 마운트 시 실행
-onMounted(() => {
+onMounted(async () => {
   fetchCategories()
+  // Check for UUID in URL and initiate verification if present
+  const urlParams = new URLSearchParams(window.location.search)
+  const uuid = urlParams.get('uuid')
+  if (uuid && (currentStep.value === 0 || currentStep.value === 1)) {
+    formState.value.verification.uuid = uuid // Store the UUID
+    // Instead of calling checkEmailVerified, send a GET request to the verification endpoint
+    try {
+      formState.value.loading.check = true
+      const res = await axios.get(`/auth/verify-email/${uuid}/`) // Send GET request
+      if (res.status === 200) {
+        formState.value.verification.verified = true
+        formState.value.modal.text = res.data.detail || '이메일 인증이 완료되었습니다!'
+        step.value = 1 // Move to verification step if needed
+      } else {
+        // Handle other status codes if necessary
+        formState.value.modal.text = res.data?.detail || '이메일 인증 중 오류가 발생했습니다.'
+      }
+    } catch (err) {
+      // Handle errors from the GET request
+      formState.value.verification.verified = false
+      handleError(err)
+    } finally {
+      formState.value.loading.check = false
+    }
+  }
 })
 
 const passwordValidationMessages = ref([
@@ -688,6 +797,19 @@ watch(
   margin-bottom: 1.75rem;
 }
 
+.form-group label {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.form-control,
+.btn {
+  box-sizing: border-box;
+}
+
 .form-control {
   width: 100%;
   padding: 0.875rem 1rem;
@@ -775,9 +897,9 @@ watch(
 }
 
 .btn:disabled {
-  opacity: 0.7;
   cursor: not-allowed;
   background: #e2e8f0;
+  color: #a0aec0;
   transform: none;
   box-shadow: none;
 }
@@ -961,8 +1083,8 @@ watch(
 .spinner-small {
   width: 20px;
   height: 20px;
-  border: 2px solid #fff;
-  border-top: 2px solid transparent;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #1a73e8;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -1055,27 +1177,117 @@ watch(
   font-weight: 500;
 }
 
-@media (max-width: 480px) {
-  .signup-container {
-    margin: 1rem;
-    padding: 1.5rem;
+.input-with-button {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+}
+
+.input-with-button .form-control {
+  flex-grow: 1;
+  flex-basis: 60%;
+}
+
+.check-button {
+  flex-shrink: 0;
+  flex-basis: 40%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  margin-top: -2px;
+}
+
+.nickname-check-message-container {
+  min-height: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.nickname-check-message {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.nickname-check-message.available {
+  color: #42b983;
+}
+
+.nickname-check-message.not-available {
+  color: #ef4444;
+}
+
+.name-group {
+  display: block;
+  width: 100%;
+}
+
+.name-group .form-group {
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.form-group:not(.name-group) {
+  margin-bottom: 1.75rem;
+}
+
+.form-group:has(select#gender) {
+  margin-top: 1.75rem;
+}
+
+.form-group label + .input-with-button,
+.form-group label + .form-control,
+.name-group .form-group label + .form-control {
+  margin-top: 0;
+}
+
+/* Added styles for select element */
+.form-group select.form-control {
+  appearance: none; /* Remove default browser styles */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1em auto;
+  padding-right: 2.5rem; /* Make space for the custom arrow */
+}
+
+.signup-container form > div {
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.signup-container form > div:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.actions {
+  margin-top: 2rem;
+}
+
+.spinner,
+.spinner-small {
+  flex-shrink: 0;
+}
+
+.spinner-small {
+  margin-right: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .name-group .form-group {
+    margin-bottom: 1.5rem;
   }
 
-  .step-progress {
-    margin-bottom: 2rem;
-  }
-
-  .step {
-    font-size: 0.85rem;
-  }
-
-  .verification-container,
-  .completion-container {
-    padding: 1.5rem;
-  }
-
-  .category-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  .form-group:has(select#gender) {
+    margin-top: 1.5rem;
   }
 }
 </style>
