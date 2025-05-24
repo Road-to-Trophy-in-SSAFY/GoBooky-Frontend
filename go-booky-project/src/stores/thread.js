@@ -1,23 +1,22 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import axios from '@/services/axios'
 import { useAuthStore } from './auth'
 
 export const useThreadStore = defineStore('thread', () => {
   const threads = ref([])
   const threadDetail = ref(null)
-  const API_URL = 'http://127.0.0.1:8000'
   const authStore = useAuthStore()
 
   // API 요청 헤더 설정 함수
   const getAuthHeader = () => {
-    return authStore.access ? { Authorization: `Bearer ${authStore.access}` } : {}
+    return authStore.accessToken ? { Authorization: `Bearer ${authStore.accessToken}` } : {}
   }
 
   // 전체 쓰레드 조회
   const getThreads = async () => {
     try {
-      const res = await axios.get(`${API_URL}/books/threads/`)
+      const res = await axios.get('/books/threads/')
       threads.value = res.data
     } catch (err) {
       console.log(err)
@@ -27,7 +26,7 @@ export const useThreadStore = defineStore('thread', () => {
   // 단일 쓰레드 조회
   const getThreadDetail = async (threadId) => {
     try {
-      const res = await axios.get(`${API_URL}/books/threads/${threadId}/`)
+      const res = await axios.get(`/books/threads/${threadId}/`)
       threadDetail.value = res.data
     } catch (err) {
       console.log(err)
@@ -41,7 +40,7 @@ export const useThreadStore = defineStore('thread', () => {
       if (!headers.Authorization) {
         throw new Error('No token found')
       }
-      const res = await axios.post(`${API_URL}/books/threads/create/`, payload, {
+      const res = await axios.post('/books/threads/create/', payload, {
         headers: {
           ...headers,
           'Content-Type': 'application/json',
@@ -57,7 +56,7 @@ export const useThreadStore = defineStore('thread', () => {
   // 쓰레드 수정
   const updateThread = async (threadId, payload) => {
     try {
-      const res = await axios.put(`${API_URL}/books/threads/${threadId}/update/`, payload, {
+      const res = await axios.put(`/books/threads/${threadId}/update/`, payload, {
         headers: getAuthHeader(),
       })
       return res.data
@@ -70,7 +69,7 @@ export const useThreadStore = defineStore('thread', () => {
   // 쓰레드 삭제
   const deleteThread = async (threadId) => {
     try {
-      await axios.delete(`${API_URL}/books/threads/${threadId}/delete/`, {
+      await axios.delete(`/books/threads/${threadId}/delete/`, {
         headers: getAuthHeader(),
       })
     } catch (err) {
@@ -83,7 +82,7 @@ export const useThreadStore = defineStore('thread', () => {
   const likeThread = async (threadId) => {
     try {
       const res = await axios.post(
-        `${API_URL}/books/threads/${threadId}/like/`,
+        `/books/threads/${threadId}/like/`,
         {},
         { headers: getAuthHeader() },
       )
