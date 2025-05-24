@@ -6,10 +6,12 @@ import { categoriesData } from './categoriesData.js'
 export const useBookStore = defineStore('book', () => {
   const books = ref([])
   const filteredBooks = ref([])
+  const isLoading = ref(false)
   const API_URL = 'http://127.0.0.1:8000'
 
   // 카테고리별로 서버에서 필터링된 책 목록을 받아오는 함수
   const getBooks = function (categoryPk = null) {
+    isLoading.value = true
     let url = `${API_URL}/books/`
     if (categoryPk) {
       url += `?category=${categoryPk}`
@@ -24,6 +26,34 @@ export const useBookStore = defineStore('book', () => {
       })
       .catch((err) => {
         console.log(err)
+      })
+      .finally(() => {
+        isLoading.value = false
+      })
+  }
+
+  // 새로운 검색 함수 추가
+  const searchBooks = function (query) {
+    if (!query) {
+      getBooks()
+      return
+    }
+
+    isLoading.value = true
+    axios({
+      method: 'get',
+      url: `${API_URL}/books/search/`,
+      params: { q: query },
+    })
+      .then((res) => {
+        books.value = res.data
+        filteredBooks.value = res.data
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+      .finally(() => {
+        isLoading.value = false
       })
   }
 
@@ -57,5 +87,14 @@ export const useBookStore = defineStore('book', () => {
     }
   }
 
-  return { books, filteredBooks, getBooks, getBookById, getBookDetail, filterByCategory }
+  return {
+    books,
+    filteredBooks,
+    isLoading,
+    getBooks,
+    searchBooks,
+    getBookById,
+    getBookDetail,
+    filterByCategory,
+  }
 })
