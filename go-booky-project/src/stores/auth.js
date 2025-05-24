@@ -62,18 +62,11 @@ export const useAuthStore = defineStore('auth', {
       this.isAuthenticated = Boolean(user)
     },
     async checkAuth() {
-      console.log('checkAuth called. isAuthenticated:', this.isAuthenticated)
-      if (!this.isAuthenticated) {
-        console.log('checkAuth: Not authenticated, skipping refresh.')
-        this.accessToken = null
-        return false
-      }
-
+      console.log('checkAuth called.')
       if (this.isLoading) {
         console.log('checkAuth: Already loading, skipping refresh.')
         return false
       }
-
       this.isLoading = true
       this.error = null
       try {
@@ -108,10 +101,9 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     async refreshToken() {
-      console.log('refreshToken called. isAuthenticated:', this.isAuthenticated)
-      if (!this.isAuthenticated || this.isLoading) {
-        console.log('refreshToken: Skipping due to not authenticated or loading.')
-        this.accessToken = null
+      console.log('refreshToken called.')
+      if (this.isLoading) {
+        console.log('refreshToken: Already loading, skipping refresh.')
         return false
       }
 
@@ -169,14 +161,9 @@ export const useAuthStore = defineStore('auth', {
   },
   persist: {
     storage: localStorage,
-    paths: ['user', 'isAuthenticated', 'rememberMe'],
+    paths: ['rememberMe'],
     serializer: {
-      serialize: (state) =>
-        JSON.stringify({
-          user: state.user,
-          isAuthenticated: state.isAuthenticated,
-          rememberMe: state.rememberMe,
-        }),
+      serialize: (state) => JSON.stringify({ rememberMe: state.rememberMe }),
       deserialize: (data) => JSON.parse(data),
     },
   },
