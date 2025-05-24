@@ -9,6 +9,7 @@
     &nbsp;|&nbsp;
     <template v-if="auth.isAuthenticated">
       <RouterLink to="/mypage"><button>마이페이지</button></RouterLink>
+      <button @click="openDeleteModal">회원탈퇴</button>
       <button @click="handleLogout">로그아웃</button>
     </template>
     <template v-else>
