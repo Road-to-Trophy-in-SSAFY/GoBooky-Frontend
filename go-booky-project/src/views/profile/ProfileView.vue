@@ -7,7 +7,7 @@
     <div v-else-if="profile" class="profile-details">
       <div class="profile-header">
         <img
-          :src="profile.profile_picture || '/default-profile.png'"
+          :src="profile.profile_picture_url || '/media/profile_pictures/default-profile.jpg'"
           alt="프로필 사진"
           class="profile-picture"
         />
@@ -28,7 +28,13 @@
               : '미입력'
           }}
         </p>
-        <button @click="startEditing" class="edit-button">프로필 수정</button>
+        <button
+          v-if="auth.user && profile.username === auth.user.username"
+          @click="startEditing"
+          class="edit-button"
+        >
+          프로필 수정
+        </button>
       </div>
 
       <div v-else class="edit-mode">
