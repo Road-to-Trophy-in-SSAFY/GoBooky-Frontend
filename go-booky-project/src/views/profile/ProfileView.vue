@@ -11,7 +11,21 @@
           alt="프로필 사진"
           class="profile-picture"
         />
-        <h3>{{ profile.username }}</h3>
+        <div>
+          <h3>{{ profile.username }}</h3>
+          <div class="follow-info">
+            <span>팔로워 {{ profile.followers_count }}</span>
+            <span>·</span>
+            <span>팔로잉 {{ profile.following_count }}</span>
+          </div>
+          <button
+            v-if="auth.user && profile.username !== auth.user.username"
+            @click="toggleFollow"
+            class="follow-button"
+          >
+            {{ profile.is_following ? '팔로우 해제' : '팔로우' }}
+          </button>
+        </div>
       </div>
 
       <div v-if="!isEditing" class="view-mode">
@@ -287,6 +301,17 @@ const saveProfile = async () => {
   }
 }
 
+const toggleFollow = async () => {
+  try {
+    const res = await axios.post(`/auth/profile/${profile.value.username}/follow/`)
+    profile.value.is_following = res.data.is_following
+    profile.value.followers_count = res.data.followers_count
+    modalText.value = res.data.is_following ? '팔로우 했습니다.' : '팔로우를 해제했습니다.'
+  } catch (err) {
+    handleError(err, '팔로우 처리에 실패했습니다.')
+  }
+}
+
 function handleError(err, fallbackMsg = '오류가 발생했습니다.') {
   console.error(err)
   if (err.response && err.response.data) {
@@ -558,5 +583,27 @@ h2 {
   font-size: 0.875rem;
   margin-top: 0.5rem;
   display: block;
+}
+
+.follow-info {
+  margin-top: 0.5rem;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.follow-button {
+  margin-top: 0.7rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 8px;
+  border: none;
+  background: #42b983;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.follow-button:hover {
+  background: #3aa876;
 }
 </style>
