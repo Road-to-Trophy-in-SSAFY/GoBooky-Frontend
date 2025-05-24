@@ -34,7 +34,14 @@
           <h3>{{ thread.title }}</h3>
           <p>책: {{ thread.book.title }}</p>
           <p>카테고리: {{ thread.book.category_name }}</p>
+          <div class="thread-actions">
           <button @click="goToThreadDetail(thread.id)" class="detail-btn">자세히 보기</button>
+        </div>
+          <button @click.stop="toggleLike(thread)" class="like-btn">
+            <span v-if="thread.liked">❤️</span>
+            <span v-else>🤍</span>
+            {{ thread.likes_count }}
+          </button>
         </div>
       </div>
     </div>
@@ -93,6 +100,16 @@ const filteredThreads = computed(() => {
 
 const goToThreadDetail = (threadId) => {
   router.push({ name: 'thread-detail', params: { id: threadId } })
+}
+
+const toggleLike = async (thread) => {
+  try {
+    await threadStore.likeThread(thread.id)
+    // 스토어의 최신 데이터로 로컬 상태 업데이트
+    threads.value = threadStore.threads
+  } catch {
+    alert('로그인 후 이용 가능합니다.')
+  }
 }
 </script>
 
@@ -176,6 +193,23 @@ const goToThreadDetail = (threadId) => {
   background: #4caf50;
   color: #fff;
   border-color: #4caf50;
+}
+.thread-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.like-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.like-btn span {
+  font-size: 20px;
 }
 
 .thread-actions {

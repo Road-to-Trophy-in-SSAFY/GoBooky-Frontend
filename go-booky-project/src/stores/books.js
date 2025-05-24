@@ -1,16 +1,15 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import axios from '@/services/axios'
 import { categoriesData } from './categoriesData.js'
 
 export const useBookStore = defineStore('book', () => {
   const books = ref([])
   const filteredBooks = ref([])
-  const API_URL = 'http://127.0.0.1:8000'
 
   // 카테고리별로 서버에서 필터링된 책 목록을 받아오는 함수
   const getBooks = function (categoryPk = null) {
-    let url = `${API_URL}/books/`
+    let url = '/books/'
     if (categoryPk) {
       url += `?category=${categoryPk}`
     }
@@ -49,7 +48,7 @@ export const useBookStore = defineStore('book', () => {
 
   const getBookDetail = async function (id) {
     try {
-      const res = await axios.get(`${API_URL}/books/${id}/`)
+      const res = await axios.get(`/books/${id}/`)
       return res.data
     } catch (err) {
       console.log(err)

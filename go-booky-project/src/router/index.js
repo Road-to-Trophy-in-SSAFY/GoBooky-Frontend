@@ -6,6 +6,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'Main',
       component: () => import('@/views/MainView.vue'),
       children: [
         {
@@ -50,17 +51,29 @@ const router = createRouter({
       name: 'EmailVerification',
       component: () => import('@/views/auth/EmailVerificationView.vue'),
     },
+    {
+      path: '/profile/:username',
+      name: 'Profile',
+      component: () => import('@/views/profile/ProfileView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const auth = useAuthStore()
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
-    alert('로그인이 필요한 서비스입니다.')
-    next({ name: 'Login' })
-  } else {
-    next()
+
+  // 인증이 필요한 페이지인 경우
+  if (to.meta.requiresAuth) {
+    // 인증 상태 확인
+    const isAuthenticated = await auth.checkAuth()
+    if (!isAuthenticated) {
+      alert('로그인이 필요한 서비스입니다.')
+      next({ name: 'Login' })
+      return
+    }
   }
+  next()
 })
 
 export default router

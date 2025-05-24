@@ -10,13 +10,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { onMounted } from 'vue'
 import { useBookStore } from '@/stores/books.js'
 import BookList from '@/components/BookList.vue'
-import Category from '@/components/Category.vue'
+import Category from '@/components/CategoryList.vue'
 
-const route = useRoute()
 const bookStore = useBookStore()
 
 onMounted(() => {
