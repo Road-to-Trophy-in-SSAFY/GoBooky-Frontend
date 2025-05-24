@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
-import { useRouter } from 'vue-router'
 
 const instance = axios.create({
   baseURL: 'http://127.0.0.1:8000', // Django 백엔드 주소
@@ -48,6 +47,13 @@ instance.interceptors.request.use(
     // isAuthenticated 여부와 관계없이 토큰이 있다면 헤더 추가 시도
     if (authStore.accessToken && config.url !== '/auth/refresh/') {
       config.headers.Authorization = `Bearer ${authStore.accessToken}`
+      console.log(
+        `Axios Request Interceptor: Setting Authorization header: Bearer ${authStore.accessToken.substring(0, 10)}...`,
+      ) // 로그 추가
+    } else {
+      console.log(
+        `Axios Request Interceptor: No Authorization header set for ${config.url}. Access Token: ${authStore.accessToken ? 'Exists' : 'Null'}`,
+      ) // 로그 추가
     }
 
     // POST, PUT, PATCH, DELETE 요청에 CSRF 토큰 추가
@@ -71,19 +77,12 @@ instance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
     const authStore = useAuthStore()
-    const router = useRouter()
 
     // 로그아웃 요청에서 발생한 401 에러는 무한 루프 방지 및 상태 초기화
     if (error.response?.status === 401 && originalRequest.url === '/auth/logout/') {
       console.log('Logout 401 error. Resetting auth state.') // 로그 추가
       authStore.$reset()
-      // 로그인 페이지로 리다이렉션
-      if (router.currentRoute.value.name !== 'login') {
-        router.push({
-          name: 'login',
-          query: { redirect: router.currentRoute.value.fullPath },
-        })
-      }
+      // 라우팅 처리는 authStore 내부 또는 컴포넌트에서 담당
       return Promise.reject(error)
     }
 
@@ -133,11 +132,8 @@ instance.interceptors.response.use(
         isRefreshing = false
         onRefreshed(null) // 대기 중 요청들에게 실패 알림
         console.error('Token refresh failed:', refreshError)
-        // 토큰 갱신 실패 시 인증 상태 초기화 및 로그인 페이지로 리다이렉션
+        // 토큰 갱신 실패 시 인증 상태 초기화. 라우팅 처리는 authStore 내부 또는 컴포넌트에서 담당
         authStore.$reset()
-        if (router.currentRoute.value.name !== 'login') {
-          router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
-        }
         return Promise.reject(refreshError)
       }
     }
@@ -153,9 +149,7 @@ instance.interceptors.response.use(
       ) {
         console.log('Received 401 for non-auth endpoint. Resetting auth state.')
         authStore.$reset()
-        if (router.currentRoute.value.name !== 'login') {
-          router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
-        }
+        // 라우팅 처리는 authStore 내부 또는 컴포넌트에서 담당
       }
     } else if (error.request) {
       console.error('Network error:', error.request)

@@ -6,14 +6,14 @@
 
 <script setup>
 import { RouterView } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { onMounted } from 'vue'
+// import { useAuthStore } from '@/stores/auth'
+// import { onMounted } from 'vue'
 
-const auth = useAuthStore()
+// const auth = useAuthStore()
 
-onMounted(async () => {
-  await auth.checkAuth()
-})
+// onMounted(async () => {
+//   await auth.checkAuth()
+// })
 </script>
 
 <style scoped>

@@ -80,6 +80,15 @@ export const useAuthStore = defineStore('auth', {
         console.log('checkAuth: Attempting to refresh token.')
         const refreshRes = await axios.post('/auth/refresh/')
         console.log('checkAuth: Refresh successful.', refreshRes.data)
+
+        if (!refreshRes.data || !refreshRes.data.user || !refreshRes.data.access) {
+          console.error(
+            'checkAuth: Refresh response missing user or access token.',
+            refreshRes.data,
+          )
+          throw new Error('Refresh response incomplete')
+        }
+
         this.user = refreshRes.data.user
         this.isAuthenticated = true
         this.accessToken = refreshRes.data.access
@@ -112,6 +121,12 @@ export const useAuthStore = defineStore('auth', {
         console.log('refreshToken: Attempting refresh via standalone call.')
         const res = await axios.post('/auth/refresh/')
         console.log('refreshToken: Standalone refresh successful.', res.data)
+
+        if (!res.data || !res.data.user || !res.data.access) {
+          console.error('refreshToken: Refresh response missing user or access token.', res.data)
+          throw new Error('Refresh response incomplete')
+        }
+
         this.user = res.data.user
         this.isAuthenticated = true
         this.accessToken = res.data.access

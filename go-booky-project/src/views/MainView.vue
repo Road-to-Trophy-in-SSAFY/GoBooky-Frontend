@@ -8,7 +8,12 @@
     <RouterLink :to="{ name: 'threads' }">Threads</RouterLink>
     &nbsp;|&nbsp;
     <template v-if="auth.isAuthenticated">
-      <RouterLink to="/mypage"><button>마이페이지</button></RouterLink>
+      <RouterLink
+        :to="{ name: 'Profile', params: { username: auth.user?.username } }"
+        v-if="auth.user?.username"
+      >
+        <button>마이페이지</button>
+      </RouterLink>
       <button @click="openDeleteModal">회원탈퇴</button>
       <button @click="handleLogout">로그아웃</button>
     </template>

@@ -108,7 +108,7 @@ const handleSubmit = async () => {
     if (response) {
       modalText.value = '로그인 성공!'
       setTimeout(() => {
-        router.push('/')
+        router.push('/') // 홈페이지로 리다이렉트
       }, 500)
       password.value = '' // 로그인 성공 후 비밀번호 초기화
     }
